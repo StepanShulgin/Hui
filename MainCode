@@ -1,0 +1,132 @@
+function processingNewApplications() {
+
+  var cellColor = {
+    PROCESSED: "#00ff00",
+    UNPROCESSED: "#ffffff",
+  };
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheet = ss.getSheets()[0];
+ 
+ 
+  var avals = ss.getRange("A1:A").getValues();
+  var lastRow = avals.filter(String).length;
+  for (var i = lastRow; i>=1;i--)
+  {
+    var temp = currSheet.getRange(i,1).getBackground();
+    var cell = currSheet.getRange(i,1);
+    Logger.log(cell.getBackground()); 
+    Logger.log(i);
+    Logger.log(temp);
+    if(temp == cellColor.PROCESSED) break;
+    else{
+      processingApplication(i);    
+      currSheet.getRange(i,1).setBackground(cellColor.PROCESSED);
+    }
+  }
+  
+
+  return cell.getBackground();
+ 
+}
+
+function onOpen(){
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu('Готовые скрипты')
+  .addItem('Принудиткльное обновление', 'processingNewApplications')
+  .addItem('Добовление нового дня', 'newDay')
+  .addToUi();
+}
+
+function newDay(){
+
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheet = spreadsheet.getSheets()[0];
+  var lastColumn = Number(currSheet.getLastColumn());
+  
+  currSheet.getRange(1, lastColumn+2).setValue(new Date());
+  var lastColumnNew = Number(currSheet.getLastColumn());
+  var string = `Количество: ${getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(lastColumnNew)))-1}`;
+  currSheet.getRange(2, lastColumn+2).setValue(string);
+
+}
+
+function getLastRowInsexByColumn(col){
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = spreadsheet.getSheets()[0]; 
+  var res = sheet.getRange(col + ":" + col).getValues().filter(String).length;
+  Logger.log(res);
+  return res;
+}
+
+function NUM_RETURN_LETRA(column){
+  var temp, letter = '';
+  while (column > 0)
+  {
+    temp = (column - 1) % 26;
+    letter = String.fromCharCode(temp + 65) + letter;
+    column = (column - temp - 1) / 26;
+  }
+  return letter;
+}
+
+function processingApplication(row)
+{
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheet = spreadsheet.getSheets()[0];
+  var lastColumn = Number(currSheet.getLastColumn());
+
+  var lastCell = getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(lastColumn)));
+  var value = currSheet.getRange(row,1).getValue();
+  
+  var flag = 0;
+
+  for(var i = 1; i<=lastCell;i++)
+  {
+    if(currSheet.getRange(i,lastColumn).getValue() == value) 
+    {
+      flag = 1;
+      break;
+    }
+  }
+  if(flag==0){
+    currSheet.getRange(lastCell,lastColumn).setValue(value);
+     var lastColumnNew = Number(currSheet.getLastColumn());
+    var string = `Количество: ${getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(lastColumnNew)))-1}`;
+    currSheet.getRange(lastCell+1,lastColumn).setValue(string);
+  }
+
+  if(flag == 1)
+  {
+    flag = 0
+  }
+
+}
+
+
+/*function parsingOfData(dataString){
+
+  var onlydate;
+  for(var i =0; i<dataString.length; i++)
+  {
+
+  }
+
+}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
