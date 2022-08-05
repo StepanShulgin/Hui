@@ -1,3 +1,4 @@
+//Под вопросом
 function processingNewApplications() {
 
   var cellColor = {
@@ -7,7 +8,7 @@ function processingNewApplications() {
   
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var currSheet = ss.getSheets()[0];
- 
+  currSheet.getRange("C1").setValue("За все время: ");
  
   var avals = ss.getRange("A1:A").getValues();
   var lastRow = avals.filter(String).length;
@@ -15,51 +16,69 @@ function processingNewApplications() {
   {
     var temp = currSheet.getRange(i,1).getBackground();
     var cell = currSheet.getRange(i,1);
-    Logger.log(cell.getBackground()); 
-    Logger.log(i);
-    Logger.log(temp);
+    
     if(temp == cellColor.PROCESSED) break;
     else{
-      processingApplication(i);    
+      newDay();
+      processingApplication(i);
+      currSheet.getRange(i,2).setValue(`${parsingOfDate()}`);    
       currSheet.getRange(i,1).setBackground(cellColor.PROCESSED);
+      recountAllAmount();
     }
-  }
-  
-
-  return cell.getBackground();
+  } 
  
 }
 
-function onOpen(){
+//Готовая функция
+function onOpen(){//Что происходит при открытии наблицы
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('Готовые скрипты')
   .addItem('Принудиткльное обновление', 'processingNewApplications')
   .addItem('Добовление нового дня', 'newDay')
   .addToUi();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheet = ss.getSheets()[0];
+  currSheet.getRange("C1").setValue("За все время: ");
+
 }
 
-function newDay(){
 
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var currSheet = spreadsheet.getSheets()[0];
-  var lastColumn = Number(currSheet.getLastColumn());
+//Готовая функция
+function newDay(){//Добовление нового столбца для новой даты
+
+ 
+  if(checkForDate()==null)
+  {
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    
+    var currSheet = spreadsheet.getSheets()[0];
+    currSheet.getRange("C1").setValue("За все время: ");
+    var range = currSheet.getRange("D1");
+    var column=range.getColumn();
+    currSheet.insertColumnBefore(column);
   
-  currSheet.getRange(1, lastColumn+2).setValue(new Date());
-  var lastColumnNew = Number(currSheet.getLastColumn());
-  var string = `Количество: ${getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(lastColumnNew)))-1}`;
-  currSheet.getRange(2, lastColumn+2).setValue(string);
-
+    currSheet.getRange(1, 4).setValue(`${parsingOfDate()}`);
+   
+    var string = `Количество: ${getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(4)))-1}`;
+    currSheet.getRange(2, 4).setValue(string);
+  }
+  
+    
 }
 
-function getLastRowInsexByColumn(col){
+
+//Готовая функция
+function getLastRowInsexByColumn(col){//Возвращает номер последней сткочки в нужном столбце(по букве)
+
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = spreadsheet.getSheets()[0]; 
   var res = sheet.getRange(col + ":" + col).getValues().filter(String).length;
-  Logger.log(res);
   return res;
 }
 
-function NUM_RETURN_LETRA(column){
+
+//Готовая функция
+function NUM_RETURN_LETRA(column){//Сосоставляет букве ряда его номер в цифрах
   var temp, letter = '';
   while (column > 0)
   {
@@ -70,63 +89,98 @@ function NUM_RETURN_LETRA(column){
   return letter;
 }
 
-function processingApplication(row)
+
+//Требует переработки
+function processingApplication(row)//Надо изменить
 {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var currSheet = spreadsheet.getSheets()[0];
-  var lastColumn = Number(currSheet.getLastColumn());
+  currSheet.getRange("C1").setValue("За все время: ");
 
-  var lastCell = getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(lastColumn)));
-  var value = currSheet.getRange(row,1).getValue();
+  var currentValue =currSheet.getRange(row,1).getDisplayValue(); 
   
-  var flag = 0;
 
-  for(var i = 1; i<=lastCell;i++)
-  {
-    if(currSheet.getRange(i,lastColumn).getValue() == value) 
+  if(checkForDate()!=null){
+    
+    var lastCell = getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(4)));
+    for(var i = 1; i<= lastCell; i++)
     {
-      flag = 1;
-      break;
+      if(currSheet.getRange(i,4).getDisplayValue() == currentValue) return null;
     }
+    currSheet.getRange(lastCell,4).setValue(currentValue);
+    currSheet.getRange(lastCell+1,4).setValue(`Количество: ${getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(4)))-1}`)
   }
-  if(flag==0){
-    currSheet.getRange(lastCell,lastColumn).setValue(value);
-     var lastColumnNew = Number(currSheet.getLastColumn());
-    var string = `Количество: ${getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(lastColumnNew)))-1}`;
-    currSheet.getRange(lastCell+1,lastColumn).setValue(string);
-  }
-
-  if(flag == 1)
-  {
-    flag = 0
-  }
+ 
 
 }
 
+//Готовая функция
+function parsingOfDate(){ //Возвразвращяет дату в удобном формате
 
-/*function parsingOfData(dataString){
+  let date = new Date();
+  let result = `${date.getDate()}.`+`${date.getMonth()}.`+`${date.getFullYear()}`;
+  return result;
+ 
+ 
+}
 
-  var onlydate;
-  for(var i =0; i<dataString.length; i++)
+//Готовая функция
+function checkForEmptyness(){  //Проверка на наличее столбцов дней
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheet = ss.getActiveSheet();
+  var lastColumn = Number(currSheet.getLastColumn());
+  
+  if(lastColumn <= 3 ) return true;
+  else return false;
+
+}
+
+//Готовая функция
+function checkForDate(){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheet = ss.getActiveSheet();
+  var lastColumn = currSheet.getLastColumn();
+  for(var i = 3; i<= lastColumn; i ++)
   {
+    
+    if(currSheet.getRange(1,i).getDisplayValue()==`${parsingOfDate()}`) return i;
+    
+  }
+  return null;
+}
+
+//Написать
+function recountAllAmount(){
+
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheet = ss.getActiveSheet();
+  var lastIndex = currSheet.getLastColumn();
+  var res = 0;
+  for(var i = 4; i<= lastIndex;i++)
+  {
+    
+    var lastCell = getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(i)));
+    res += Number(parsingOfEashAmount(currSheet.getRange(lastCell,i).getDisplayValue()));
+    Logger.log(res);
+  } 
+  currSheet.getRange(2,3).setValue(res);
+}
+//Написать
+function parsingOfEashAmount(numberString){
+ 
+  var flag = 0;
+  var result = "";
+  for(var i = 0; i<numberString.length;i++)
+  {
+   
+    if(flag == 0 && numberString[i]== " ") flag = 1;
+    if(flag == 1) result+=`${numberString[i]}`;
+    
 
   }
+  
+  return Number(result);
 
-}*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}
