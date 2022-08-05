@@ -34,7 +34,6 @@ function onOpen(){//Что происходит при открытии набл
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('Готовые скрипты')
   .addItem('Принудиткльное обновление', 'processingNewApplications')
-  .addItem('Добовление нового дня', 'newDay')
   .addToUi();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var currSheet = ss.getSheets()[0];
