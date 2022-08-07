@@ -1,0 +1,273 @@
+var currentClient = "Седьмой Клиент";
+
+
+
+
+//Готовая функция
+function processingNewApplications() {
+
+  var cellColor = {
+    PROCESSED: "#00ff00",
+    UNPROCESSED: "#ffffff",
+  };
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheet = ss.getSheets()[0];
+  currSheet.getRange("C1").setValue("За все время: ");
+ 
+  var avals = ss.getRange("A1:A").getValues();
+  var lastRow = avals.filter(String).length;
+  for (var i = lastRow; i>=1;i--)
+  {
+    var temp = currSheet.getRange(i,1).getBackground();
+    var cell = currSheet.getRange(i,1);
+    
+    if(temp == cellColor.PROCESSED) break;
+    else{
+      newDay();
+      processingApplication(i);
+      currSheet.getRange(i,2).setValue(`${getCurrentDateFull()}`);    
+      currSheet.getRange(i,1).setBackground(cellColor.PROCESSED);
+      recountAllAmount();
+    }
+  } 
+ 
+}
+
+//Готовая функция
+function onOpen(){//Что происходит при открытии наблицы
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu('Готовые скрипты')
+  .addItem('Принудиткльное обновление', 'processingNewApplications')
+  .addItem('Добовление нового дня', 'newDay')
+  .addItem('Отправка текущего для', 'sendData')
+  .addToUi();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheet = ss.getSheets()[0];
+  currSheet.getRange("C1").setValue("За все время: ");
+
+}
+
+
+//Готовая функция
+function newDay(){//Добовление нового столбца для новой даты
+
+ 
+  if(checkForDate()==null)
+  {
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    
+    var currSheet = spreadsheet.getSheets()[0];
+    currSheet.getRange("C1").setValue("За все время: ");
+    var range = currSheet.getRange("D1");
+    var column=range.getColumn();
+    currSheet.insertColumnBefore(column);
+  
+    currSheet.getRange(1, 4).setValue(`${getCurrentDateFull()}`);
+   
+    var string = `Количество: ${getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(4)))-1}`;
+    currSheet.getRange(2, 4).setValue(string);
+  }
+  
+    
+}
+
+
+//Готовая функция
+function getLastRowInsexByColumn(col){//Возвращает номер последней сткочки в нужном столбце(по букве)
+
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = spreadsheet.getSheets()[0]; 
+  var res = sheet.getRange(col + ":" + col).getValues().filter(String).length;
+  return res;
+}
+
+
+//Готовая функция
+function NUM_RETURN_LETRA(column){//Сосоставляет букве ряда его номер в цифрах
+  var temp, letter = '';
+  while (column > 0)
+  {
+    temp = (column - 1) % 26;
+    letter = String.fromCharCode(temp + 65) + letter;
+    column = (column - temp - 1) / 26;
+  }
+  return letter;
+}
+
+
+//Требует переработки
+function processingApplication(row)//Надо изменить
+{
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheet = spreadsheet.getSheets()[0];
+  currSheet.getRange("C1").setValue("За все время: ");
+
+  var currentValue =currSheet.getRange(row,1).getDisplayValue(); 
+  
+
+  if(checkForDate()!=null){
+    
+    var lastCell = getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(4)));
+    for(var i = 1; i<= lastCell; i++)
+    {
+      if(currSheet.getRange(i,4).getDisplayValue() == currentValue) return null;
+    }
+    currSheet.getRange(lastCell,4).setValue(currentValue);
+    currSheet.getRange(lastCell+1,4).setValue(`Количество: ${getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(4)))-1}`)
+  }
+ 
+
+}
+
+
+//Готовая функция
+function checkForEmptyness(){  //Проверка на наличее столбцов дней
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheet = ss.getSheets()[0];
+  var lastColumn = Number(currSheet.getLastColumn());
+  
+  if(lastColumn <= 3 ) return true;
+  else return false;
+
+}
+
+//Готовая функция
+function checkForDate(){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheet = ss.getSheets()[0];
+  var lastColumn = currSheet.getLastColumn();
+  for(var i = 3; i<= lastColumn; i ++)
+  {
+    
+    if(currSheet.getRange(1,i).getDisplayValue()==`${getCurrentDateFull()}`) return i;
+    
+  }
+  return null;
+}
+
+//Готовая функция
+function recountAllAmount(){
+
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheet = ss.getSheets()[0];
+  var lastIndex = currSheet.getLastColumn();
+  var res = 0;
+  for(var i = 4; i<= lastIndex;i++)
+  {
+    
+    var lastCell = getLastRowInsexByColumn(NUM_RETURN_LETRA(Math.trunc(i)));
+    res += Number(parsingOfEashAmount(currSheet.getRange(lastCell,i).getDisplayValue()));
+    
+  } 
+  currSheet.getRange(2,3).setValue(res);
+}
+//Готовая функция
+function parsingOfEashAmount(numberString){
+ 
+  var flag = 0;
+  var result = "";
+  for(var i = 0; i<numberString.length;i++)
+  {
+   
+    if(flag == 0 && numberString[i]== " ") flag = 1;
+    if(flag == 1) result+=`${numberString[i]}`;
+    
+
+  }
+  
+  return Number(result);
+
+}
+
+function sendData(){
+  var ssClient = SpreadsheetApp.getActiveSpreadsheet();
+  var currSheetClient = ssClient.getSheets()[0];
+
+  var ssMain = SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1W6A5D6HCdHDwtBI0W0uyLk5k52V2NhzwD7jC1iC6KXU/edit#gid=0");
+  var necessarySheetMain = ssMain.getSheetByName(`${getCurrentSheetByDate()}`);
+ 
+  var firstColumn =  necessarySheetMain.getRange("A:A").getValues();
+  
+  var clientRow=0;
+  var dateColumn=0;
+
+  for(var i = 0;i<= firstColumn.length;i++)
+  {
+    if(firstColumn[i]==currentClient)
+    {
+      clientRow = i+1;
+      break;    
+    }
+  }
+  
+  for(var i = 1; i<= necessarySheetMain.getLastRow(); i ++)
+  {
+    
+    var temp = `${necessarySheetMain.getRange(1,i).getDisplayValue()}`;
+   
+    if(temp==`${getCurrentDateFull()}`)
+    { 
+      dateColumn= i;
+      break;
+    }
+    
+  }
+  var valueColumn = checkForDate();
+  var valueRow;
+  if(valueColumn!= null)
+  {
+    valueRow= getLastRowInsexByColumn(NUM_RETURN_LETRA(valueColumn));
+    necessarySheetMain.getRange(clientRow,dateColumn).setValue(`${currSheetClient.getRange(valueRow,valueColumn).getDisplayValue()}`);
+
+  }
+
+ 
+
+
+  
+}
+function getCurrentSheetByDate(){
+  let date = new Date();
+  
+  var result =""
+  if(Number(date.getMonth())<10)
+  {
+    result+=`0${date.getMonth()+1}.`;
+  }
+  else result+=`${date.getMonth()+1}.`;
+
+  var dateString = (date.getFullYear()).toString();
+  result +=`${dateString[2]}${dateString[2]}`;
+  return result;
+
+}
+function getCurrentDateFull(){
+  let date = new Date();
+  
+  var result =""
+  if(Number(date.getDate())<10)
+  {
+    result+=`0${date.getDate()}.`;
+  }
+  else result+=`${date.getMonth()+1}.`;
+  if(Number(date.getMonth())<10)
+  {
+    result+=`0${date.getMonth()+1}.`;
+  }
+  else result+=`${date.getMonth()+1}.`;
+
+  
+  result +=`${date.getFullYear()}`;
+  return result;
+
+}
+
+
+
+
+
+
+
